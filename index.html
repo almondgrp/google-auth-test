@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thử nghiệm 2FA Google Auth</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsotp/1.0.0/jsotp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 400px; margin: 50px auto; text-align: center; background: #f4f4f9; padding: 20px; border-radius: 8px; }
+        #qrcode { display: flex; justify-content: center; margin: 20px 0; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #007bff; color: white; cursor: pointer; border: none; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>Thiết lập 2FA Auth</h2>
+    <p>Mã Secret Key: <strong id="secret-text">...</strong></p>
+    
+    <div id="qrcode"></div>
+
+    <hr>
+
+    <h3>Xác thực mã 6 số</h3>
+    <input type="text" id="otp-input" placeholder="Nhập 6 số trên ứng dụng" maxlength="6">
+    <button onclick="verifyOTP()">Kiểm Tra Mã</button>
+    
+    <p id="result-message"></p>
+
+    <script>
+        // 1. Tạo Secret Key ngẫu nhiên (Base32 format)
+        const secret = "JBSWY3DPEHPK3PXP"; // Bạn có thể đổi chuỗi này ngẫu nhiên bằng chữ từ A-Z và số từ 2-7
+        document.getElementById('secret-text').innerText = secret;
+
+        // 2. Tạo URL định dạng Google Authenticator nhận diện được
+        const otpauth = `otpauth://totp/MyTestingApp:user@test.com?secret=${secret}&issuer=MyTestingApp`;
+
+        // 3. Hiển thị mã QR lên màn hình
+        new QRCode(document.getElementById("qrcode"), {
+            text: otpauth,
+            width: 180,
+            height: 180
+        });
+
+        // 4. Hàm kiểm tra mã khi người dùng bấm nút
+        function verifyOTP() {
+            const userInput = document.getElementById('otp-input').value;
+            const messageEl = document.getElementById('result-message');
+
+            // Dùng thư viện jsotp để tự tính toán mã OTP hiện tại dựa trên Secret Key
+            const totp = jsOTP.totp();
+            const correctToken = totp.getOTP(secret);
+
+            if (userInput === correctToken) {
+                messageEl.innerText = "🎉 Xác thực thành công! Mã chính xác.";
+                messageEl.className = "success";
+            } else {
+                messageEl.innerText = "❌ Mã sai hoặc đã hết hạn (30s). Hãy thử lại!";
+                messageEl.className = "error";
+            }
+        }
+    </script>
+</body>
+</html>

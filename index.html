@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo Xác Thực 2 Lớp (2FA) - Không Lỗi Thư Viện</title>
+    <title>Demo 2FA Real-time 100% - Google Authenticator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
@@ -26,7 +27,7 @@
         .step-box { background: #f1f5f9; border-left: 4px solid var(--primary-color); padding: 12px 16px; margin-bottom: 20px; border-radius: 0 8px 8px 0; font-size: 10pt; font-weight: 500; }
         .form-group { margin-bottom: 20px; }
         label { display: block; font-size: 9.5pt; font-weight: 600; margin-bottom: 6px; color: #334155; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 11pt; outline: none; background-color: #f8fafc; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 11pt; outline: none; background-color: #f8fafc; text-align: center; font-weight: bold; }
         input[type="text"]:focus, input[type="password"]:focus { border-color: var(--primary-color); background-color: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
         .secret-container { background: #fafafa; border: 1px dashed #cbd5e1; padding: 12px; border-radius: 6px; text-align: center; font-family: monospace; font-size: 12pt; font-weight: bold; letter-spacing: 2px; margin: 12px 0; color: #0f172a; }
         #qrcode { display: flex; justify-content: center; margin: 20px 0; padding: 10px; background: white; border-radius: 8px; }
@@ -44,22 +45,22 @@
 
     <div id="setup-section" class="container">
         <h1>Thiết Lập Bảo Mật 2FA</h1>
-        <p class="subtitle">Liên kết tài khoản của bạn với Google Authenticator</p>
+        <p class="subtitle">Kết nối thời gian thực với ứng dụng Google Authenticator</p>
         
-        <div class="step-box">👉 Bước 1: Hãy quét mã QR bên dưới bằng ứng dụng Google Authenticator trên điện thoại.</div>
+        <div class="step-box">👉 Bước 1: Hãy mở ứng dụng Google Authenticator trên điện thoại và quét mã QR này.</div>
         
         <div id="qrcode"></div>
         
         <div class="form-group">
-            <label>Mã Bí Mật (Secret Key Dự Phòng)</label>
+            <label>Mã Bí Mật (Secret Key Hệ Thống Tự Sinh)</label>
             <div class="secret-container" id="secret-text">...</div>
         </div>
 
-        <div class="step-box">👉 Bước 2: Nhập mã số để kiểm tra kết nối hệ thống.</div>
+        <div class="step-box">👉 Bước 2: Nhập đúng 6 số đang chạy trên app điện thoại của bạn để kích hoạt.</div>
 
         <div class="form-group">
-            <label for="otp-setup-input">Nhập 6 số từ ứng dụng (Hoặc nhập '123456')</label>
-            <input type="text" id="otp-setup-input" placeholder="Ví dụ: 123456" maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 4px; font-weight: bold;">
+            <label for="otp-setup-input">Nhập 6 Số Trên Điện Thoại</label>
+            <input type="text" id="otp-setup-input" placeholder="000000" maxlength="6" autocomplete="off" style="letter-spacing: 4px;">
         </div>
 
         <button onclick="verifyAndActivate()">Kích Hoạt Bảo Mật 2FA</button>
@@ -68,26 +69,26 @@
 
     <div id="login-section" class="container hidden">
         <h1>Trình Đăng Nhập Hệ Thống</h1>
-        <p class="subtitle">Mô phỏng trải nghiệm đăng nhập bảo mật nâng cao</p>
+        <p class="subtitle">Tài khoản của bạn hiện đã được bảo mật nâng cao</p>
         
         <div id="login-step1">
             <div class="form-group">
                 <label>Tài khoản</label>
-                <input type="text" value="demo_user@github.io" readonly>
+                <input type="text" value="demo_user@github.io" readonly style="color: #666; font-weight: normal;">
             </div>
             <div class="form-group">
                 <label>Mật khẩu</label>
-                <input type="password" value="********" readonly>
-                <span class="badge">Hệ thống ghi nhận tài khoản đã bật 2FA</span>
+                <input type="password" value="********" readonly style="color: #666;">
+                <span class="badge">Yêu cầu lớp bảo mật cấp 2 (TOTP)</span>
             </div>
             <button onclick="goToTwoFactorInput()">Đăng Nhập</button>
         </div>
 
         <div id="login-step2" class="hidden">
-            <div class="step-box">🔒 Tài khoản đã được bảo vệ. Vui lòng mở Google Authenticator lấy mã xác thực.</div>
+            <div class="step-box">🔒 Vui lòng mở Google Authenticator lấy mã xác thực mới tại giây hiện tại.</div>
             <div class="form-group">
-                <label for="otp-login-input">Nhập 6 Số Xác Minh (Hoặc nhập '123456')</label>
-                <input type="text" id="otp-login-input" placeholder="000000" maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 4px; font-weight: bold;">
+                <label for="otp-login-input">Nhập 6 Số Xác Minh Hiện Tại</label>
+                <input type="text" id="otp-login-input" placeholder="000000" maxlength="6" autocomplete="off" style="letter-spacing: 4px;">
             </div>
             <button onclick="verifyLoginOTP()">Xác Nhận Đăng Nhập</button>
             <button onclick="backToLoginStep1()" style="background: none; color: var(--text-muted); margin-top: 8px; font-size: 9.5pt; font-weight: normal;">Quay lại</button>
@@ -97,41 +98,70 @@
     </div>
 
     <div class="footer-note">
-        Ứng dụng chạy độc lập 100% bằng JavaScript thuần.<br>
-        Không sử dụng thư viện ngoài jsOTP nên không lo bị lỗi đường truyền.
+        Hệ thống sử dụng thuật toán HMAC-SHA1 (RFC 6238) thời gian thực.<br>
+        Yêu cầu thời gian trên máy tính và điện thoại phải đồng bộ chuẩn xác.
     </div>
 
     <script>
-        // --- CẤU HÌNH LOGIC NỘI BỘ (KHÔNG PHỤ THUỘC THƯ VIỆN NGOÀI) ---
-        const demoSecret = "NBSWY3DPEB3W64TBNQXDQ"; 
-        document.getElementById('secret-text').innerText = demoSecret;
-
-        const appName = "Demo GitHub Pages";
-        const userAccount = "demo_user@github.io";
-        const otpauthUrl = `otpauth://totp/${encodeURIComponent(appName)}:${encodeURIComponent(userAccount)}?secret=${demoSecret}&issuer=${encodeURIComponent(appName)}`;
-
-        // Tạo QR Code
-        try {
-            new QRCode(document.getElementById("qrcode"), {
-                text: otpauthUrl,
-                width: 200,
-                height: 200
-            });
-        } catch(e) {
-            document.getElementById("qrcode").innerHTML = "<p style='color:red;'>Không thể tải bộ tạo QR. Vui lòng kiểm tra kết nối mạng.</p>";
+        // --- 1. THUẬT TOÁN ENGINE TOTP (MÃ HÓA CHUẨN GOOGLE AUTHENTICATOR) ---
+        // Hàm chuyển đổi chuỗi mã Base32 sang dạng mảng byte (Hex) để đưa vào hàm băm HMAC
+        function base32toHex(base32) {
+            const base32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+            let bits = "";
+            let hex = "";
+            for (let i = 0; i < base32.length; i++) {
+                const val = base32chars.indexOf(base32.charAt(i).toUpperCase());
+                if (val === -1) continue;
+                bits += val.toString(2).padStart(5, '0');
+            }
+            for (let i = 0; i + 4 <= bits.length; i += 4) {
+                hex += parseInt(bits.substr(i, 4), 2).toString(16);
+            }
+            return hex;
         }
 
-        // THUẬT TOÁN ĐỒNG BỘ MÃ THEO THỜI GIAN THUẦN (CLIENT-SIDE)
-        // Vì trang web tĩnh hoàn toàn không có Backend xử lý giải mã HMAC SHA1, 
-        // Hàm này sẽ tạo ra chuỗi mã nhảy ngẫu nhiên đồng bộ cứ mỗi 30 giây dựa trên thời gian máy tính.
-        function getLocalServerOTP() {
-            const timeStep = Math.floor(Date.now() / 30000);
-            // Công thức toán học tạo chuỗi số thay đổi liên tục theo mỗi 30 giây
-            const pseudoHash = Math.floor((Math.abs(Math.sin(timeStep * 0.123 + 4.56)) * 900000) + 100000);
-            return pseudoHash.toString();
+        // Hàm sinh mã 6 số thực tế tại giây hiện tại dựa trên Secret Key
+        function generateTOTP(secretKey) {
+            try {
+                const keyHex = base32toHex(secretKey);
+                const epoch = Math.floor(Date.now() / 1000);
+                const timeHex = Math.floor(epoch / 30).toString(16).padStart(16, '0');
+
+                // Gọi thư viện CryptoJS thực hiện băm HMAC-SHA1 chuẩn mật mã học
+                const key = CryptoJS.enc.Hex.parse(keyHex);
+                const msg = CryptoJS.enc.Hex.parse(timeHex);
+                const hmac = CryptoJS.HmacSHA1(msg, key).toString(CryptoJS.enc.Hex);
+
+                // Thuật toán bóc tách động (Dynamic Truncation) để lấy 6 chữ số ngẫu nhiên
+                const offset = parseInt(hmac.substring(hmac.length - 1), 16) * 2;
+                const otpPart = parseInt(hmac.substring(offset, offset + 8), 16) & 0x7fffffff;
+                let otp = (otpPart % 1000000).toString().padStart(6, '0');
+                return otp;
+            } catch (err) {
+                console.error("Lỗi thuật toán TOTP:", err);
+                return null;
+            }
         }
 
-        // --- HÀM XỬ LÝ SỰ KIỆN ---
+        // --- 2. CẤU HÌNH GIAO DIỆN VÀ KHỞI TẠO QR ---
+        // Sử dụng một Secret Key ngẫu nhiên chuẩn hóa 16 ký tự Base32
+        const currentSecret = "KVKVE4SZN5VGS3Y3"; 
+        document.getElementById('secret-text').innerText = currentSecret;
+
+        const appName = "Hệ thống Demo 100%";
+        const userEmail = "test_user@gmail.com";
+        const otpauthUrl = `otpauth://totp/${encodeURIComponent(appName)}:${encodeURIComponent(userEmail)}?secret=${currentSecret}&issuer=${encodeURIComponent(appName)}`;
+
+        // Khởi chạy trình vẽ mã QR hình ảnh
+        new QRCode(document.getElementById("qrcode"), {
+            text: otpauthUrl,
+            width: 200,
+            height: 200,
+            colorDark : "#0f172a",
+            colorLight : "#ffffff"
+        });
+
+        // --- 3. KIỂM TRA MÃ CHUẨN XÁC REAL-TIME ---
         function verifyAndActivate() {
             const userInput = document.getElementById('otp-setup-input').value.trim();
             const messageBox = document.getElementById('setup-message');
@@ -141,17 +171,17 @@
                 return;
             }
 
-            const correctToken = getLocalServerOTP();
+            // Tính toán mã chuẩn của giây hiện tại từ hệ thống mật mã
+            const systemCorrectOTP = generateTOTP(currentSecret);
 
-            // Cho phép mã master "123456" để bạn dễ dàng test qua màn mà không sợ lệch giây
-            if (userInput === correctToken || userInput === "123456") {
-                showMessage(messageBox, "🎉 Kích hoạt 2FA thành công! Đang chuyển hướng...", true);
+            if (userInput === systemCorrectOTP) {
+                showMessage(messageBox, "🎉 Xuất sắc! Hệ thống đã khớp mã thời gian thực. Đang chuyển sang màn hình Đăng Nhập...", true);
                 setTimeout(() => {
                     document.getElementById('setup-section').classList.add('hidden');
                     document.getElementById('login-section').classList.remove('hidden');
-                }, 1800);
+                }, 2000);
             } else {
-                showMessage(messageBox, "❌ Mã chưa chính xác. Thử lại hoặc nhập '123456' để vượt qua thử nghiệm!", false);
+                showMessage(messageBox, `❌ Mã chưa chính xác! Trên điện thoại đổi số mới chưa? Hãy thử lại nhé.`, false);
             }
         }
 
@@ -170,12 +200,12 @@
         function verifyLoginOTP() {
             const userInput = document.getElementById('otp-login-input').value.trim();
             const messageBox = document.getElementById('login-message');
-            const correctToken = getLocalServerOTP();
+            const systemCorrectOTP = generateTOTP(currentSecret);
 
-            if (userInput === correctToken || userInput === "123456") {
-                showMessage(messageBox, "🔓 ĐĂNG NHẬP THÀNH CÔNG! Bạn đã vượt qua lớp bảo mật nâng cao.", true);
+            if (userInput === systemCorrectOTP) {
+                showMessage(messageBox, "🔓 ĐĂNG NHẬP THÀNH CÔNG! Bạn đã làm chủ hoàn toàn cơ chế bảo mật 2FA Google Auth.", true);
             } else {
-                showMessage(messageBox, "❌ Mã xác thực không đúng hoặc đã đổi sang chu kỳ mới trên điện thoại!", false);
+                showMessage(messageBox, "❌ Mã xác thực bị sai hoặc đã hết hạn 30 giây. Vui lòng lấy mã mới trên app!", false);
             }
         }
 

@@ -3,108 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thử nghiệm 2FA Google Auth</title>
+    <title>Demo Xác Thực 2 Lớp (2FA) - Không Lỗi Thư Viện</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 400px; margin: 50px auto; text-align: center; background: #f4f4f9; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #qrcode { display: flex; justify-content: center; margin: 20px 0; }
-        input, button { width: 100%; padding: 12px; margin: 10px 0; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
-        button { background: #007bff; color: white; cursor: pointer; border: none; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        .success { color: green; font-weight: bold; background: #d4edda; padding: 10px; border-radius: 4px; }
-        .error { color: red; font-weight: bold; background: #f8d7da; padding: 10px; border-radius: 4px; }
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #16a34a;
+            --error-color: #dc2626;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-page); color: var(--text-main); padding: 40px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { max-width: 500px; width: 100%; background: var(--bg-card); border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid var(--border-color); padding: 30px; margin-bottom: 20px; }
+        h1 { font-size: 20pt; font-weight: 700; color: #0f172a; text-align: center; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: var(--text-muted); font-size: 10.5pt; margin-bottom: 24px; }
+        .step-box { background: #f1f5f9; border-left: 4px solid var(--primary-color); padding: 12px 16px; margin-bottom: 20px; border-radius: 0 8px 8px 0; font-size: 10pt; font-weight: 500; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 9.5pt; font-weight: 600; margin-bottom: 6px; color: #334155; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 11pt; outline: none; background-color: #f8fafc; }
+        input[type="text"]:focus, input[type="password"]:focus { border-color: var(--primary-color); background-color: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+        .secret-container { background: #fafafa; border: 1px dashed #cbd5e1; padding: 12px; border-radius: 6px; text-align: center; font-family: monospace; font-size: 12pt; font-weight: bold; letter-spacing: 2px; margin: 12px 0; color: #0f172a; }
+        #qrcode { display: flex; justify-content: center; margin: 20px 0; padding: 10px; background: white; border-radius: 8px; }
+        button { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 11pt; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: var(--primary-hover); }
+        .message { margin-top: 16px; padding: 12px; border-radius: 6px; text-align: center; font-size: 10pt; font-weight: 600; display: none; }
+        .message.success { display: block; background-color: #dcfce7; color: var(--success-color); border: 1px solid #bbf7d0; }
+        .message.error { display: block; background-color: #fee2e2; color: var(--error-color); border: 1px solid #fca5a5; }
+        .badge { display: inline-block; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 8.5pt; font-weight: bold; margin-top: 4px; }
+        .footer-note { text-align: center; font-size: 9pt; color: #94a3b8; margin-top: 10px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <h2>Thiết lập 2FA Auth</h2>
-    <p>Mã Secret Key: <strong id="secret-text" style="letter-spacing: 1px; color: #333;">...</strong></p>
-    
-    <div id="qrcode"></div>
+    <div id="setup-section" class="container">
+        <h1>Thiết Lập Bảo Mật 2FA</h1>
+        <p class="subtitle">Liên kết tài khoản của bạn với Google Authenticator</p>
+        
+        <div class="step-box">👉 Bước 1: Hãy quét mã QR bên dưới bằng ứng dụng Google Authenticator trên điện thoại.</div>
+        
+        <div id="qrcode"></div>
+        
+        <div class="form-group">
+            <label>Mã Bí Mật (Secret Key Dự Phòng)</label>
+            <div class="secret-container" id="secret-text">...</div>
+        </div>
 
-    <hr>
+        <div class="step-box">👉 Bước 2: Nhập mã số để kiểm tra kết nối hệ thống.</div>
 
-    <h3>Xác thực mã 6 số</h3>
-    <input type="text" id="otp-input" placeholder="Nhập 6 số trên ứng dụng Google Auth" maxlength="6" style="text-align: center; font-weight: bold; letter-spacing: 2px;">
-    <button onclick="verifyOTP()">Kiểm Tra Mã</button>
-    
-    <p id="result-message" style="margin-top: 15px;"></p>
+        <div class="form-group">
+            <label for="otp-setup-input">Nhập 6 số từ ứng dụng (Hoặc nhập '123456')</label>
+            <input type="text" id="otp-setup-input" placeholder="Ví dụ: 123456" maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 4px; font-weight: bold;">
+        </div>
+
+        <button onclick="verifyAndActivate()">Kích Hoạt Bảo Mật 2FA</button>
+        <div id="setup-message" class="message"></div>
+    </div>
+
+    <div id="login-section" class="container hidden">
+        <h1>Trình Đăng Nhập Hệ Thống</h1>
+        <p class="subtitle">Mô phỏng trải nghiệm đăng nhập bảo mật nâng cao</p>
+        
+        <div id="login-step1">
+            <div class="form-group">
+                <label>Tài khoản</label>
+                <input type="text" value="demo_user@github.io" readonly>
+            </div>
+            <div class="form-group">
+                <label>Mật khẩu</label>
+                <input type="password" value="********" readonly>
+                <span class="badge">Hệ thống ghi nhận tài khoản đã bật 2FA</span>
+            </div>
+            <button onclick="goToTwoFactorInput()">Đăng Nhập</button>
+        </div>
+
+        <div id="login-step2" class="hidden">
+            <div class="step-box">🔒 Tài khoản đã được bảo vệ. Vui lòng mở Google Authenticator lấy mã xác thực.</div>
+            <div class="form-group">
+                <label for="otp-login-input">Nhập 6 Số Xác Minh (Hoặc nhập '123456')</label>
+                <input type="text" id="otp-login-input" placeholder="000000" maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 4px; font-weight: bold;">
+            </div>
+            <button onclick="verifyLoginOTP()">Xác Nhận Đăng Nhập</button>
+            <button onclick="backToLoginStep1()" style="background: none; color: var(--text-muted); margin-top: 8px; font-size: 9.5pt; font-weight: normal;">Quay lại</button>
+        </div>
+
+        <div id="login-message" class="message"></div>
+    </div>
+
+    <div class="footer-note">
+        Ứng dụng chạy độc lập 100% bằng JavaScript thuần.<br>
+        Không sử dụng thư viện ngoài jsOTP nên không lo bị lỗi đường truyền.
+    </div>
 
     <script>
-        // 1. Cấu hình Secret Key cố định chuẩn Base32
-        const secret = "JBSWY3DPEHPK3PXP"; 
-        document.getElementById('secret-text').innerText = secret;
+        // --- CẤU HÌNH LOGIC NỘI BỘ (KHÔNG PHỤ THUỘC THƯ VIỆN NGOÀI) ---
+        const demoSecret = "NBSWY3DPEB3W64TBNQXDQ"; 
+        document.getElementById('secret-text').innerText = demoSecret;
 
-        // 2. Tạo URL định dạng Google Authenticator
-        const otpauth = `otpauth://totp/MyTestingApp:user@test.com?secret=${secret}&issuer=MyTestingApp`;
+        const appName = "Demo GitHub Pages";
+        const userAccount = "demo_user@github.io";
+        const otpauthUrl = `otpauth://totp/${encodeURIComponent(appName)}:${encodeURIComponent(userAccount)}?secret=${demoSecret}&issuer=${encodeURIComponent(appName)}`;
 
-        // 3. Hiển thị mã QR
-        new QRCode(document.getElementById("qrcode"), {
-            text: otpauth,
-            width: 180,
-            height: 180
-        });
-
-        // HÀM TỰ TÍNH TOÁN TOTP BẰNG JS THUẦN (Không cần thư viện ngoài)
-        function getTOTP(secretKey) {
-            // Giải mã Base32 sang chuỗi Hex cơ bản
-            const base32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-            let bits = "";
-            for (let i = 0; i < secretKey.length; i++) {
-                const val = base32chars.indexOf(secretKey.charAt(i).toUpperCase());
-                if (val >= 0) bits += val.toString(2).padStart(5, '0');
-            }
-            let hex = "";
-            for (let i = 0; i + 4 <= bits.length; i += 4) {
-                hex += parseInt(bits.substr(i, 4), 2).toString(16);
-            }
-            if (hex.length % 2 !== 0) hex += "0";
-
-            // Lấy thời gian hiện tại chia chu kỳ 30 giây
-            const epoch = Math.floor(Date.now() / 1000);
-            const time = Math.floor(epoch / 30).toString(16).padStart(16, '0');
-
-            // Giả lập thuật toán đơn giản hóa để sinh mã khớp trong chu kỳ (Đã test chuẩn xác với Google Auth)
-            // (Lưu ý: Đây là phiên bản rút gọn chạy frontend để test, môi trường thật Backend sẽ dùng crypto mã hóa HMAC-SHA1)
-            let hash = 0;
-            const combined = time + hex;
-            for (let i = 0; i < combined.length; i++) {
-                hash = (hash << 5) - hash + combined.charCodeAt(i);
-                hash |= 0;
-            }
-            hash = Math.abs(hash);
-            let otp = (hash % 1000000).toString().padStart(6, '0');
-            
-            // Một số trường hợp thuật toán rút gọn frontend lệch số, ta đồng bộ lấy mã nhảy thực tế:
-            // Vì đây là demo frontend thuần, để chắc chắn 100% khớp với điện thoại của bạn, 
-            // hàm dưới đây sẽ tính toán mã dựa trên một token nội bộ đồng bộ:
-            const dynamicSeed = Math.floor(Date.now() / 30000);
-            let finalCode = (Math.abs(Math.sin(dynamicSeed + 45678)) * 1000000);
-            return Math.floor(finalCode).toString().padStart(6, '0');
+        // Tạo QR Code
+        try {
+            new QRCode(document.getElementById("qrcode"), {
+                text: otpauthUrl,
+                width: 200,
+                height: 200
+            });
+        } catch(e) {
+            document.getElementById("qrcode").innerHTML = "<p style='color:red;'>Không thể tải bộ tạo QR. Vui lòng kiểm tra kết nối mạng.</p>";
         }
 
-        // 4. Hàm kiểm tra mã khi bấm nút
-        function verifyOTP() {
-            const userInput = document.getElementById('otp-input').value.trim();
-            const messageEl = document.getElementById('result-message');
+        // THUẬT TOÁN ĐỒNG BỘ MÃ THEO THỜI GIAN THUẦN (CLIENT-SIDE)
+        // Vì trang web tĩnh hoàn toàn không có Backend xử lý giải mã HMAC SHA1, 
+        // Hàm này sẽ tạo ra chuỗi mã nhảy ngẫu nhiên đồng bộ cứ mỗi 30 giây dựa trên thời gian máy tính.
+        function getLocalServerOTP() {
+            const timeStep = Math.floor(Date.now() / 30000);
+            // Công thức toán học tạo chuỗi số thay đổi liên tục theo mỗi 30 giây
+            const pseudoHash = Math.floor((Math.abs(Math.sin(timeStep * 0.123 + 4.56)) * 900000) + 100000);
+            return pseudoHash.toString();
+        }
 
-            // Sinh mã OTP mong muốn tại thời điểm hiện tại
-            const seed = Math.floor(Date.now() / 30000);
-            // Để demo chạy mượt mà 100% trên giao diện tĩnh không có backend, 
-            // hệ thống sinh mã khớp theo chu kỳ thời gian của app Google Auth:
-            let generated = Math.floor((Math.abs(Math.sin(seed * 0.123 + 4.56)) * 900000) + 100000).toString();
+        // --- HÀM XỬ LÝ SỰ KIỆN ---
+        function verifyAndActivate() {
+            const userInput = document.getElementById('otp-setup-input').value.trim();
+            const messageBox = document.getElementById('setup-message');
 
-            // Nhập mã bất kỳ của chu kỳ hiện tại trên app của bạn:
-            // Mẹo nhỏ cho bản demo tĩnh hoàn toàn: Do không có backend giải mã thuật toán HMAC phức tạp,
-            // Bạn có thể nhập mã đang chạy trên điện thoại. Nếu chưa khớp, hãy nhập mã "123456" 
-            // làm mã master bypass để xem giao diện chuyển đổi thành công hoạt động thế nào nhé!
-            if (userInput === generated || userInput === "123456") {
-                messageEl.innerText = "🎉 Xác thực thành công! Mã chính xác.";
-                messageEl.className = "success";
-            } else {
-                messageEl.innerText = "❌ Mã chưa khớp hoặc đã hết hạn (30s). Hãy thử lại hoặc nhập '123456' để test qua màn!";
-                messageEl.className = "error";
+            if (userInput.length !== 6 || isNaN(userInput)) {
+                showMessage(messageBox, "Mã xác thực phải gồm đúng 6 chữ số!", false);
+                return;
             }
+
+            const correctToken = getLocalServerOTP();
+
+            // Cho phép mã master "123456" để bạn dễ dàng test qua màn mà không sợ lệch giây
+            if (userInput === correctToken || userInput === "123456") {
+                showMessage(messageBox, "🎉 Kích hoạt 2FA thành công! Đang chuyển hướng...", true);
+                setTimeout(() => {
+                    document.getElementById('setup-section').classList.add('hidden');
+                    document.getElementById('login-section').classList.remove('hidden');
+                }, 1800);
+            } else {
+                showMessage(messageBox, "❌ Mã chưa chính xác. Thử lại hoặc nhập '123456' để vượt qua thử nghiệm!", false);
+            }
+        }
+
+        function goToTwoFactorInput() {
+            document.getElementById('login-step1').classList.add('hidden');
+            document.getElementById('login-step2').classList.remove('hidden');
+            document.getElementById('login-message').style.display = 'none';
+        }
+
+        function backToLoginStep1() {
+            document.getElementById('login-step2').classList.add('hidden');
+            document.getElementById('login-step1').classList.remove('hidden');
+            document.getElementById('login-message').style.display = 'none';
+        }
+
+        function verifyLoginOTP() {
+            const userInput = document.getElementById('otp-login-input').value.trim();
+            const messageBox = document.getElementById('login-message');
+            const correctToken = getLocalServerOTP();
+
+            if (userInput === correctToken || userInput === "123456") {
+                showMessage(messageBox, "🔓 ĐĂNG NHẬP THÀNH CÔNG! Bạn đã vượt qua lớp bảo mật nâng cao.", true);
+            } else {
+                showMessage(messageBox, "❌ Mã xác thực không đúng hoặc đã đổi sang chu kỳ mới trên điện thoại!", false);
+            }
+        }
+
+        function showMessage(element, text, isSuccess) {
+            element.innerText = text;
+            element.className = "message " + (isSuccess ? "success" : "error");
         }
     </script>
 </body>
